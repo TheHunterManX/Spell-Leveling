@@ -1,0 +1,63 @@
+BUILDING SpellLeveling.dll
+
+This is the complete source of the plugin (licensed GPL-3.0-or-later, see LICENSE.txt one folder above this one in the release archive). The scripts are for Windows
+and PowerShell. The default paths in the scripts are the author's; every one can be passed as a parameter or
+set in an environment variable, as below.
+
+WHAT YOU NEED
+  - Visual Studio 2022 with "Desktop development with C++" (MSVC v143, a Windows SDK). It was built with Community.
+  - CMake 3.21 or newer (the one that comes with Visual Studio works).
+  - Git.
+  - vcpkg, and CommonLibSSE-NG (below).
+
+1. COMMONLIBSSE-NG (the exact version this was built with: 13.1.0, commit 12d61f3c39f7d4ba1b1ab543df2bca0e613dc747)
+     git clone https://github.com/alandtse/CommonLibSSE-NG extern/CommonLibSSE-NG
+     cd extern/CommonLibSSE-NG
+     git checkout 12d61f3c39f7d4ba1b1ab543df2bca0e613dc747
+     git submodule update --init --depth 1
+   (Or keep it elsewhere and set the COMMONLIB_DIR environment variable, or pass -CommonLib to build.ps1.)
+
+2. VCPKG
+     git clone https://github.com/microsoft/vcpkg extern/vcpkg
+     extern\vcpkg\bootstrap-vcpkg.bat
+   Keep the full history (no --depth): vcpkg.json pins the package versions with a "builtin-baseline" commit.
+   (Or set SPL_VCPKG_ROOT, or pass -Vcpkg to build.ps1.) The dependencies (spdlog, fmt, DirectXTK, DirectXMath,
+   rapidcsv) are fetched and built by vcpkg on the first build, with the triplet x64-windows-static-md.
+
+3. BUILD
+     powershell -ExecutionPolicy Bypass -File build.ps1
+   The first build takes several minutes (it compiles CommonLibSSE-NG); later ones a few seconds.
+   The result is package\SKSE\Plugins\SpellLeveling.dll and SpellLeveling.ini, ready to copy into Data.
+   The build folder is %LOCALAPPDATA%\spl-build (kept short on purpose: MSBuild's file tracker fails on long paths).
+
+The steps below need files that are only in the author's full project folder, not in the release archive
+(tests\, test.ps1, ingame-test.ps1, deploy.ps1, make-release.ps1). Building the plugin needs only steps 1 to 3.
+
+4. TESTS
+     powershell -ExecutionPolicy Bypass -File test.ps1
+   Builds and runs tests\tests.cpp against src\core.cpp (the rules with no game code in them). No game needed.
+
+5. IN-GAME SELF TEST (optional)
+     powershell -ExecutionPolicy Bypass -File ingame-test.ps1 -NoBuild -GameDir "<your Skyrim folder>"
+   Deploys the plugin, starts the game through SKSE to the main menu with a switch file
+   (Data\SKSE\Plugins\SpellLeveling.selftest) that makes the plugin check its hooks and every spell, reads
+   SpellLeveling.log and closes the game. It never loads or writes a save. Steam must be running.
+   deploy.ps1 (used by start.bat / purge.bat) has the same -GameDir parameter.
+
+6. RELEASE FOLDER
+     powershell -ExecutionPolicy Bypass -File make-release.ps1
+   Fills the release folder (next to the AI folder) with the plugin (SKSE\Plugins\SpellLeveling.dll and .ini) and, beside
+   it in SKSE\Plugins\, a "Skyrim Leveling" folder whose src\ holds the code and everything that builds it
+   (CMakeLists.txt, vcpkg.json, build.ps1, BUILDING.txt). README.txt, LICENSE.txt and THIRD-PARTY-NOTICES.txt live in
+   "Skyrim Leveling" itself. Zip the contents of the release folder to make the mod's archive.
+
+LAYOUT
+  In the release archive, "SKSE\Plugins\Skyrim Leveling\src\" is all there is to build: the code and the build files
+  together, and the commands above are run in it (build.ps1 takes SpellLeveling.ini from SKSE\Plugins, two folders up). In the author's full project folder the code is in a src\ subfolder and the build
+  files are one level up (CMakeLists.txt finds the code either way).
+  Code            the plugin. core.* = the rules (settings, XP curve, bonuses, text); config.* = ini loading;
+                  progress.* = per-spell state, names and the SKSE co-save; hooks.* = the engine hooks;
+                  selftest.* = the in-game self test; main.cpp = plugin entry.
+  CMakeLists.txt, vcpkg.json, build.ps1   the build (steps 1 to 3). build.ps1 also copies SpellLeveling.ini into package\.
+  tests\          unit tests for core (full project folder only).
+  README.md       design notes: how each hook works, what was tested, known limits (full project folder only).
