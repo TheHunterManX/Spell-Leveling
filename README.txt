@@ -46,7 +46,7 @@ LICENSE
   The full text of the license is in LICENSE.txt next to this file (also https://www.gnu.org/licenses/gpl-3.0.html).
 
 SOURCE CODE
-  The complete source code of this plugin, with the scripts to build it, is in the "src" folder next to this file.
+  The complete source code of this plugin, with the scripts to build it, is in the "src" folder.
   src\BUILDING.txt explains how to build SpellLeveling.dll from it.
 
 BUILT ON
