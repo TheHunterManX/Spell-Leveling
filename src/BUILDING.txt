@@ -30,34 +30,3 @@ WHAT YOU NEED
    The result is package\SKSE\Plugins\SpellLeveling.dll and SpellLeveling.ini, ready to copy into Data.
    The build folder is %LOCALAPPDATA%\spl-build (kept short on purpose: MSBuild's file tracker fails on long paths).
 
-The steps below need files that are only in the author's full project folder, not in the release archive
-(tests\, test.ps1, ingame-test.ps1, deploy.ps1, make-release.ps1). Building the plugin needs only steps 1 to 3.
-
-4. TESTS
-     powershell -ExecutionPolicy Bypass -File test.ps1
-   Builds and runs tests\tests.cpp against src\core.cpp (the rules with no game code in them). No game needed.
-
-5. IN-GAME SELF TEST (optional)
-     powershell -ExecutionPolicy Bypass -File ingame-test.ps1 -NoBuild -GameDir "<your Skyrim folder>"
-   Deploys the plugin, starts the game through SKSE to the main menu with a switch file
-   (Data\SKSE\Plugins\SpellLeveling.selftest) that makes the plugin check its hooks and every spell, reads
-   SpellLeveling.log and closes the game. It never loads or writes a save. Steam must be running.
-   deploy.ps1 (used by start.bat / purge.bat) has the same -GameDir parameter.
-
-6. RELEASE FOLDER
-     powershell -ExecutionPolicy Bypass -File make-release.ps1
-   Fills the release folder (next to the AI folder) with the plugin (SKSE\Plugins\SpellLeveling.dll and .ini) and, beside
-   it in SKSE\Plugins\, a "Skyrim Leveling" folder whose src\ holds the code and everything that builds it
-   (CMakeLists.txt, vcpkg.json, build.ps1, BUILDING.txt). README.txt, LICENSE.txt and THIRD-PARTY-NOTICES.txt live in
-   "Skyrim Leveling" itself. Zip the contents of the release folder to make the mod's archive.
-
-LAYOUT
-  In the release archive, "SKSE\Plugins\Skyrim Leveling\src\" is all there is to build: the code and the build files
-  together, and the commands above are run in it (build.ps1 takes SpellLeveling.ini from SKSE\Plugins, two folders up). In the author's full project folder the code is in a src\ subfolder and the build
-  files are one level up (CMakeLists.txt finds the code either way).
-  Code            the plugin. core.* = the rules (settings, XP curve, bonuses, text); config.* = ini loading;
-                  progress.* = per-spell state, names and the SKSE co-save; hooks.* = the engine hooks;
-                  selftest.* = the in-game self test; main.cpp = plugin entry.
-  CMakeLists.txt, vcpkg.json, build.ps1   the build (steps 1 to 3). build.ps1 also copies SpellLeveling.ini into package\.
-  tests\          unit tests for core (full project folder only).
-  README.md       design notes: how each hook works, what was tested, known limits (full project folder only).
