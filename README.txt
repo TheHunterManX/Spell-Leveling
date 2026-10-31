@@ -7,14 +7,14 @@ Use a spell enough and it'll increase magnitude and decrease spell cost.
 Main Features
 	- Per-spell leveling: Every spell earns XP when you cast it, and each level-up makes that spell stronger.
 	XP scales from 2x gain during combat to 4x against level 100 enemies.
-	- Progression: Higher levels increases magnitude, reduces magicka cost, and increases spell time for conjuration and alteration.
-	Default setting is 2% more magnitude per level (duration for conjuration and alteration) as well as 0.25% cost reduction per level.
+	- Progression: Higher levels increases magnitude, reduces magicka cost, and increases spell time.
+	Default setting is 2% per level as well as 0.25% cost reduction per level.
 	- Level-up notifications: A short on-screen message tells you when a spell levels up.
 	- Fully configurable: An ini file lets you set the XP rate, level cap, and scaling.
 	- Works with any spell: Vanilla spells and spells added by other mods are *supported, with no patches needed.
 	- Light on scripts: Built to avoid noticeable performance impact.
 	
-*tested with Apocolypse
+*tested with Apocolypse, Mysticism, Odin, Triumvirate
 
 Requirements
 	- Skyrim Special Edition / Anniversary Edition
@@ -46,8 +46,8 @@ LICENSE
   The full text of the license is in LICENSE.txt next to this file (also https://www.gnu.org/licenses/gpl-3.0.html).
 
 SOURCE CODE
-  The complete source code of this plugin, with the scripts to build it, is in the "src" folder.
-  src\BUILDING.txt explains how to build SpellLeveling.dll from it.
+  The complete source code of this plugin, with the scripts to build it, is found on Github.
+  https://github.com/TheHunterManX/Spell-Leveling
 
 BUILT ON
   CommonLibSSE-NG, https://github.com/alandtse/CommonLibSSE-NG (GPL-3.0-or-later with the Modding Exception and the

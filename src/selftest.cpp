@@ -25,6 +25,7 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <fstream>
 #include <filesystem>
 #include <format>
 #include <map>
@@ -408,7 +409,8 @@ namespace selftest
 					const auto* base = effect->baseEffect;
 					const bool  excludedArchetype = cfg.excludedArchetypes.contains(static_cast<int>(base->GetArchetype()));
 					const bool  excludedAV = av_is_protected(base->data.primaryAV);
-					const bool  shouldChange = !excludedArchetype && !excludedAV;
+					const bool  upkeep = spell->GetDelivery() == RE::MagicSystem::Delivery::kSelf && effect->effectItem.area == 0 && base->data.flags.all(RE::EffectSetting::EffectSettingData::Flag::kDetrimental);
+						const bool  shouldChange = !excludedArchetype && !excludedAV && !upkeep;
 					const bool  changed = ae->magnitude != 10.0f;
 					// duration: scaled (x3 at Lv.100) for the schools in the settings, except the excluded archetypes
 					int school = -1;
@@ -523,24 +525,42 @@ namespace selftest
 			}
 			note("spells of the base game, effects that scale / effects: " + report);
 
-			// How the game defines ward spells and a few others for comparison (read-only dump, for the written analysis).
+			// How the game defines the spells named in Data\SKSE\Plugins\SpellLeveling.dumpnames.txt (one name or part of a name per
+			// line; read-only dump, for analysing why a spell does or does not get stronger).
+			std::vector<std::string> wantedNames;
+			{
+				std::ifstream list("Data/SKSE/Plugins/SpellLeveling.dumpnames.txt");
+				for (std::string line; std::getline(list, line);) {
+					while (!line.empty() && (line.back() == '\r' || line.back() == ' ')) {
+						line.pop_back();
+					}
+					if (!line.empty()) {
+						std::transform(line.begin(), line.end(), line.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+						wantedNames.push_back(line);
+					}
+				}
+			}
 			for (auto* spell : spells) {
 				std::string name = spell->GetName();
 				if (const auto at = name.find("] "); name.rfind("[Lv.", 0) == 0 && at != std::string::npos) {
 					name = name.substr(at + 2);
 				}
-				if ((spell->GetFormID() >> 24) != 0 || (name.find("Ward") == std::string::npos && name != "Healing" && name != "Oakflesh")) {
+				std::string lower = name;
+				std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				const bool wanted = std::any_of(wantedNames.begin(), wantedNames.end(), [&](const std::string& w) { return lower.find(w) != std::string::npos; });
+				if (!wanted) {
 					continue;
 				}
-				logs::info("selftest: DUMP spell '{}' form {:08X} school {} casting type {} delivery {} cost {:.1f}", name, spell->GetFormID(), static_cast<int>(spell->GetAssociatedSkill()),
-					static_cast<int>(spell->GetCastingType()), static_cast<int>(spell->GetDelivery()), spell->CalculateMagickaCost(nullptr));
+				const auto* file = spell->GetFile(0);
+				logs::info("selftest: DUMP spell '{}' from {} form {:08X} school {} casting type {} delivery {} cost {:.1f}", name, file ? file->GetFilename() : "?", spell->GetFormID(),
+					static_cast<int>(spell->GetAssociatedSkill()), static_cast<int>(spell->GetCastingType()), static_cast<int>(spell->GetDelivery()), spell->CalculateMagickaCost(nullptr));
 				for (const auto* effect : spell->effects) {
 					if (!effect || !effect->baseEffect) {
 						continue;
 					}
 					const auto* b = effect->baseEffect;
-					logs::info("selftest: DUMP   effect {:08X} archetype {} primaryAV {} secondaryAV {} flags {:#x} (recover {}, detrimental {}) casting type {} | magnitude {} area {} duration {} | text '{}'",
-						b->GetFormID(), static_cast<int>(b->GetArchetype()), static_cast<int>(b->data.primaryAV), static_cast<int>(b->data.secondaryAV),
+					logs::info("selftest: DUMP   effect {:08X} '{}' archetype {} primaryAV {} secondaryAV {} flags {:#x} (recover {}, detrimental {}) casting type {} | magnitude {} area {} duration {} | text '{}'",
+						b->GetFormID(), b->GetFullName(), static_cast<int>(b->GetArchetype()), static_cast<int>(b->data.primaryAV), static_cast<int>(b->data.secondaryAV),
 						static_cast<std::uint32_t>(b->data.flags.get()), b->data.flags.all(RE::EffectSetting::EffectSettingData::Flag::kRecover),
 						b->data.flags.all(RE::EffectSetting::EffectSettingData::Flag::kDetrimental), static_cast<int>(b->data.castingType),
 						effect->effectItem.magnitude, effect->effectItem.area, effect->effectItem.duration, b->magicItemDescription.c_str());

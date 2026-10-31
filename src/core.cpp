@@ -34,12 +34,12 @@
 namespace core
 {
 	const char* const kDefaultExcludedArchetypes =
-		"Paralysis, Calm, Frenzy, Demoralize, Rally, Invisibility, Light, Darkness, NightEye, DetectLife, Guide, Disguise, "
-		"SoulTrap, Banish, Etherealize, Dispel, CureDisease, CureParalysis, CureAddiction, CurePoison, Disarm, SlowTime, "
-		"Stagger, Script, WerewolfFeed, Werewolf, VampireLord";
+		"Paralysis, Invisibility, Light, Darkness, NightEye, DetectLife, Guide, Disguise, "
+		"SoulTrap, Etherealize, Dispel, CureDisease, CureParalysis, CureAddiction, CurePoison, Disarm, SlowTime, "
+		"Stagger, WerewolfFeed, Werewolf, VampireLord";
 
-	const char* const kDefaultDurationSchools = "Alteration, Conjuration";
-	const char* const kDefaultDurationExcludedArchetypes = "Script";
+	const char* const kDefaultDurationSchools = "Alteration, Conjuration, Destruction, Illusion, Restoration";
+	const char* const kDefaultDurationExcludedArchetypes = "Paralysis, Calm, Frenzy, Demoralize, Rally";
 
 	namespace
 	{
@@ -213,6 +213,7 @@ namespace core
 			else if (a_key == "magnitudeperlevel") set_double("MagnitudePerLevel", a_value, s.magnitudePerLevel, 0.0, 10.0, m);
 			else if (a_key == "durationperlevel") set_double("DurationPerLevel", a_value, s.durationPerLevel, 0.0, 10.0, m);
 			else if (a_key == "maxdurationmultiplier") set_double("MaxDurationMultiplier", a_value, s.maxDurationMultiplier, 0.0, 1.0e6, m);
+			else if (a_key == "durationminseconds") set_int("DurationMinSeconds", a_value, s.durationMinSeconds, 0, 1000000, m);
 			else if (a_key == "durationschools") parse_schools(a_value, s.durationSchools, m);
 			else if (a_key == "durationexcludedarchetypes") parse_archetype_set(a_value, a_table, s.durationExcludedArchetypes, m);
 			else if (a_key == "costperlevel") set_double("CostPerLevel", a_value, s.costPerLevel, 0.0, 10.0, m);
@@ -235,6 +236,7 @@ namespace core
 					s.nameFormat = a_value;
 				}
 			} else if (a_key == "excludedarchetypes") parse_archetypes(a_value, a_table, s, m);
+			else if (a_key == "iniversion") set_int("IniVersion", a_value, s.iniVersion, 0, 1000000, m);
 			else if (a_key == "verboselog") set_bool("VerboseLog", a_value, s.verbose, m);
 			else m.push_back(std::format("unknown setting '{}', ignored", a_key));
 		}

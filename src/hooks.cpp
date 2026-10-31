@@ -164,6 +164,15 @@ namespace hooks
 			}
 		}
 
+		// A harmful effect a spell puts on its own caster with no area (Summon Sun Fylgja's "Damage Magicka") is the spell's upkeep
+		// cost, not an attack: making it stronger with levels would make the spell dearer to keep up. Explosions around the
+		// caster (Charged Nova, Sun Flare) have an area and do scale.
+		bool is_upkeep(const RE::SpellItem* a_spell, const RE::Effect* a_effect)
+		{
+			return a_spell && a_effect && a_effect->baseEffect && a_spell->GetDelivery() == RE::MagicSystem::Delivery::kSelf && a_effect->effectItem.area == 0 &&
+			       a_effect->baseEffect->data.flags.all(RE::EffectSetting::EffectSettingData::Flag::kDetrimental);
+		}
+
 		// Whether this effect object is an AccumulatingValueModifierEffect (what Accumulate Magnitude effects are made as).
 		bool is_accumulating(const RE::ActiveEffect* a_effect)
 		{
@@ -172,7 +181,7 @@ namespace hooks
 		}
 
 		// Whether the duration of this kind of effect grows with levels (when its spell is of a school in DurationSchools):
-		// every kind except those the ini excludes (scripted effects, by default, whose scripts may depend on the duration).
+		// every kind except those the ini excludes (by default paralysis and the mind effects: calm, frenzy, fear, rally).
 		bool duration_boosted(const RE::EffectSetting* base)
 		{
 			return base && !config::get().durationExcludedArchetypes.contains(static_cast<int>(base->GetArchetype()));
@@ -220,8 +229,8 @@ namespace hooks
 				return;
 			}
 			const auto* base = a_effect->effect ? a_effect->effect->baseEffect : nullptr;
-			const double magnitudeFactor = is_boosted(base) ? progress::magnitude_factor(spell) : 1.0;
-			const double durationFactor = (a_effect->duration > 0.0f && duration_boosted(base)) ? progress::duration_factor(spell) : 1.0;
+			const double magnitudeFactor = (is_boosted(base) && !is_upkeep(spell, a_effect->effect)) ? progress::magnitude_factor(spell) : 1.0;
+			const double durationFactor = (a_effect->duration > 0.0f && a_effect->duration >= static_cast<float>(config::get().durationMinSeconds) && duration_boosted(base)) ? progress::duration_factor(spell) : 1.0;
 			if (magnitudeFactor == 1.0 && durationFactor == 1.0) {
 				return;
 			}
@@ -314,7 +323,7 @@ namespace hooks
 
 			if (spell) {
 				if (c.showBonusInDescription) {
-					if (is_boosted(a_effect->baseEffect)) {
+					if (is_boosted(a_effect->baseEffect) && !is_upkeep(spell, a_effect)) {
 						const double factor = progress::magnitude_factor(spell);
 						if (factor != 1.0) {
 							savedMagnitude = a_effect->effectItem.magnitude;
@@ -323,7 +332,7 @@ namespace hooks
 						}
 					}
 					// The same for the duration ("<dur>" reads it): Alteration and Conjuration spells last longer as they level.
-					if (a_effect->effectItem.duration > 0 && duration_boosted(a_effect->baseEffect)) {
+					if (a_effect->effectItem.duration > 0 && a_effect->effectItem.duration >= static_cast<std::uint32_t>(config::get().durationMinSeconds) && duration_boosted(a_effect->baseEffect)) {
 						const double durationFactor = progress::duration_factor(spell);
 						if (durationFactor != 1.0) {
 							savedDuration = a_effect->effectItem.duration;

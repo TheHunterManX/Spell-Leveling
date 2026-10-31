@@ -27,6 +27,10 @@
 
 namespace core
 {
+	// The version of the ini layout this plugin expects. Raise it whenever a setting is added, removed or changes meaning: an ini
+	// with another number (or none) is saved as .old and replaced by the defaults when the game starts.
+	inline constexpr int kIniVersion = 1;
+
 	struct Settings
 	{
 		// [XP]
@@ -59,6 +63,7 @@ namespace core
 		double        maxDurationMultiplier = 0.0;  // 0 = none
 		std::set<int> durationSchools;              // School numbers below
 		std::set<int> durationExcludedArchetypes;   // effects whose duration is left alone
+		int           durationMinSeconds = 2;       // effects shorter than this (1-second ticks, instant-style) keep their duration
 
 		// [Display]
 		bool        toastEnabled = true;
@@ -80,6 +85,7 @@ namespace core
 
 		// [Debug]
 		bool verbose = false;
+		int  iniVersion = 0;  // the IniVersion line of the file that was read; 0 = it has none
 	};
 
 	// The five schools of magic, in the order the settings use them.

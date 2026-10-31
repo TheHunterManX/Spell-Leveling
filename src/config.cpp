@@ -17,7 +17,9 @@
 // https://github.com/alandtse/CommonLibSSE-NG
 #include "config.h"
 
+#include <filesystem>
 #include <fstream>
+#include "default_ini.h"
 #include <iterator>
 
 namespace config
@@ -78,6 +80,29 @@ namespace config
 		return g_settings;
 	}
 
+	namespace
+	{
+		void reset_ini(const char* a_path, int a_found)
+		{
+			namespace fs = std::filesystem;
+			const std::string backup = std::string(a_path) + ".old";
+			std::error_code   ec;
+			fs::copy_file(a_path, backup, fs::copy_options::overwrite_existing, ec);
+			if (ec) {
+				logs::warn("ini: {} has IniVersion {} but this plugin needs {}. It could not be saved as {} ({}), so it was left alone; the defaults are used this time.", a_path, a_found, core::kIniVersion, backup, ec.message());
+				return;
+			}
+			std::ofstream out(a_path, std::ios::binary | std::ios::trunc);
+			out << kDefaultIniText;
+			out.flush();
+			if (!out) {
+				logs::warn("ini: the old {} was saved as {} but the new one could not be written; the defaults are used this time.", a_path, backup);
+				return;
+			}
+			logs::warn("ini: {} had IniVersion {} but this plugin needs {}. The old file was saved as {} and replaced by the defaults.", a_path, a_found, core::kIniVersion, backup);
+		}
+	}
+
 	void load(const char* a_path)
 	{
 		std::vector<std::string> messages;
@@ -86,12 +111,27 @@ namespace config
 		std::ifstream file(a_path, std::ios::binary);
 		if (!file) {
 			log_messages(messages);
-			logs::info("ini: {} not found, using the defaults", a_path);
+			std::ofstream out(a_path, std::ios::binary | std::ios::trunc);
+			out << kDefaultIniText;
+			out.flush();
+			if (out) {
+				logs::info("ini: {} not found; a new one with the defaults was written", a_path);
+			} else {
+				logs::warn("ini: {} not found and a new one could not be written; using the defaults", a_path);
+			}
 			return;
 		}
 		const std::string text((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 		int               read = 0;
 		core::parse_ini(text, archetype_names(), g_settings, messages, &read);
+		if (g_settings.iniVersion != core::kIniVersion) {
+			// An ini from another version (or one with no IniVersion line, like 1.0's) can mean different things now: it is
+			// saved next to itself as .old, replaced by the defaults, and the defaults are used.
+			const int found = g_settings.iniVersion;
+			g_settings = core::defaults(archetype_names(), nullptr);
+			reset_ini(a_path, found);
+			return;
+		}
 		log_messages(messages);
 		logs::info("ini: {} setting(s) read from {}", read, a_path);
 	}
