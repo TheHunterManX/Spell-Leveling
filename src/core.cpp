@@ -210,13 +210,13 @@ namespace core
 			else if (a_key == "combatxpminlevel") set_int("CombatXpMinLevel", a_value, s.combatXpMinLevel, 0, 1000000, m);
 			else if (a_key == "combatxpmaxlevel") set_int("CombatXpMaxLevel", a_value, s.combatXpMaxLevel, 0, 1000000, m);
 			else if (a_key == "levelcap") set_int("LevelCap", a_value, s.levelCap, 0, 1000000, m);
-			else if (a_key == "magnitudeperlevel") set_double("MagnitudePerLevel", a_value, s.magnitudePerLevel, 0.0, 10.0, m);
+			else if (a_key == "magnitudeperlevel") set_double("MagnitudePerLevel", a_value, s.magnitudePerLevel, -10.0, 10.0, m);
 			else if (a_key == "durationperlevel") set_double("DurationPerLevel", a_value, s.durationPerLevel, 0.0, 10.0, m);
 			else if (a_key == "maxdurationmultiplier") set_double("MaxDurationMultiplier", a_value, s.maxDurationMultiplier, 0.0, 1.0e6, m);
 			else if (a_key == "durationminseconds") set_int("DurationMinSeconds", a_value, s.durationMinSeconds, 0, 1000000, m);
 			else if (a_key == "durationschools") parse_schools(a_value, s.durationSchools, m);
 			else if (a_key == "durationexcludedarchetypes") parse_archetype_set(a_value, a_table, s.durationExcludedArchetypes, m);
-			else if (a_key == "costperlevel") set_double("CostPerLevel", a_value, s.costPerLevel, 0.0, 10.0, m);
+			else if (a_key == "costperlevel") set_double("CostPerLevel", a_value, s.costPerLevel, -10.0, 10.0, m);
 			else if (a_key == "costfloor") set_double("CostFloor", a_value, s.costFloor, 0.0, 1.0, m);
 			else if (a_key == "maxmagnitudemultiplier") set_double("MaxMagnitudeMultiplier", a_value, s.maxMagnitudeMultiplier, 0.0, 1.0e6, m);
 			else if (a_key == "toastenabled") set_bool("ToastEnabled", a_value, s.toastEnabled, m);
@@ -305,7 +305,7 @@ namespace core
 		if (a_settings.maxMagnitudeMultiplier > 0.0) {
 			factor = std::min(factor, std::max(a_settings.maxMagnitudeMultiplier, 1.0));
 		}
-		return factor;
+		return std::max(factor, 0.0);
 	}
 
 	double cost_xp_factor(const Settings& a_settings, double a_cost)
