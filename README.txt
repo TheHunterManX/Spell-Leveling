@@ -1,5 +1,5 @@
 SPELL LEVELING  (SKSE plugin for Skyrim Special Edition)
-Version 0.1.0
+Version 1.1
 
 The mod makes each spell now have its own level and gains experience every time you cast it.
 Use a spell enough and it'll increase magnitude and decrease spell cost.
